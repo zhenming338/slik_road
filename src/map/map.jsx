@@ -25,24 +25,23 @@ import perspective_8_2 from "./data/perspective/8/7.json";
 import perspective_9_1 from "./data/perspective/9/6.json";
 import perspective_9_2 from "./data/perspective/9/7.json";
 import perspective_10_1 from "./data/perspective/10/6.json";
-import follow from "./data/perspective/follow.json";
 
 const Map = () => {
     //地图容器和地图实例的虚拟dom元素
     const mapContainerRef = useRef(null);
     const mapInstanceRef = useRef(null);
+    const indexRef = useRef(0);
     const intervalRefs = useRef([])
     const [siteInfo, setSiteInfo] = useState([44, 44]);
     const [running, setRunning] = useState(false);
-
 
     const [animationList, setAnimationList] = useState([
         {
             type: "layer", perspective: [perspective_1_1, perspective_1_2, perspective_1_3], follow: 0,
         }, {
-            type: "layer", perspective: [perspective_2_1],
+            type: "layer", perspective: [perspective_2_1], follow: 0,
         }, {
-            type: "layer", perspective: [perspective_3_1, perspective_3_2, perspective_3_3], follow: 0,
+            type: "layer", perspective: [perspective_3_1, perspective_3_2, perspective_3_3], follow: 1,
         }, {
             type: "layer", perspective: [perspective_4_1, perspective_4_2, perspective_4_3], follow: 1,
         }, {
@@ -54,7 +53,7 @@ const Map = () => {
         }, {
             type: "layer", perspective: [perspective_8_1, perspective_8_2], follow: 1,
         }, {
-            type: "layer", perspective: [perspective_9_1, perspective_9_2], follow: 1,
+            type: "layer", perspective: [perspective_9_1, perspective_9_2], follow: 0,
         }, {
             type: "layer", perspective: [perspective_10_1], follow: 0,
         }
@@ -80,14 +79,15 @@ const Map = () => {
             }, filter: ['==', 'admin_level', 2], // 只显示国家级别边界
         },],
     });
-    const addPopulationLayer = (map, items, animationIndex) => {
-        const sourceId = `population-source-${animationIndex}`;
-        const layerId = `population-layer-${animationIndex}`;
+    const addPopulationLayer = (map, items, animationIndex, perspectiveIndex, isFollow) => {
+        const sourceId = `population-source-${animationIndex}-${perspectiveIndex}`;
+        const layerId = `population-layer-${animationIndex}-${perspectiveIndex}`;
         // 避免重复添加
         if (map.getSource(sourceId)) {
             console.log("sourceId", sourceId, "避免重复添加");
             return;
         }
+
 
         // 创建 GeoJSON 数据（合并所有 items）
         const geojsonData = {
@@ -102,11 +102,11 @@ const Map = () => {
                 geometry: {
                     type: "Polygon",
                     coordinates: [[
-                        [item.location[0] - 0.025, item.location[1] - 0.025],
-                        [item.location[0] + 0.025, item.location[1] - 0.025],
-                        [item.location[0] + 0.025, item.location[1] + 0.025],
-                        [item.location[0] - 0.025, item.location[1] + 0.025],
-                        [item.location[0] - 0.025, item.location[1] - 0.025],
+                        [item.location[0] - 0.05, item.location[1] - 0.05],
+                        [item.location[0] + 0.05, item.location[1] - 0.05],
+                        [item.location[0] + 0.05, item.location[1] + 0.05],
+                        [item.location[0] - 0.05, item.location[1] + 0.05],
+                        [item.location[0] - 0.05, item.location[1] - 0.05],
                     ]],
                 },
             })),
@@ -132,6 +132,8 @@ const Map = () => {
             },
         });
     };
+
+
     useEffect(() => {
         mapboxgl.accessToken = MAPBOX_TOKEN;
         mapInstanceRef.current = new mapboxgl.Map({
@@ -144,25 +146,52 @@ const Map = () => {
     }, [style]);
 
     useEffect(() => {
-
+        if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
+            var mainRoadList = []
+            animationList.map((animationItem, animationIndex) => {
+                animationItem.perspective.map((perspectiveItem, perspectiveIndex) => {
+                    addPopulationLayer(mapInstanceRef.current, perspectiveItem, animationIndex, perspectiveIndex, false);
+                })
+                console.log(animationItem);
+                mainRoadList = [...mainRoadList, ...animationItem.perspective[animationItem.follow]]
+            })
+            console.log(mainRoadList)
+            timerControl("start", mainRoadList);
+        }
     }, [storeCurrentPageIndex]);
 
-    const timerControl = (action) => {
+    const timerControl = (action, item) => {
         if (action === "start") {
             if (!running) {
                 setRunning(true);
                 if (mapInstanceRef.current) {
                     intervalRefs.current[0] = setInterval(() => {
                         console.log("startTimer");
+                        console.log(item.length)
+                        console.log(indexRef.current)
                         // 使用函数式更新
-                        setSiteInfo((prevSite) => {
-                            const newSite = [(prevSite[0] + 0.01) % 90, (prevSite[1] + 0.01) % 90];
-                            mapInstanceRef.current.setCenter(newSite);
-                            mapInstanceRef.current.setZoom(6);
-                            mapInstanceRef.current.setPitch(45);
-                            return newSite;
-                        });
-                    }, 20);
+                        if (indexRef.current < item.length-1) {
+                            setSiteInfo(() => {
+                                console.log(item[indexRef.current].location)
+                                const newSite = item[indexRef.current].location;
+                                mapInstanceRef.current.easeTo({
+                                    center: newSite,
+                                    zoom: 6,
+                                    pitch: 45,
+                                    bearing: 0,
+                                    duration: 200,  // 持续时间（毫秒）
+                                    easing: (t) => t * (2 - t)  // 自定义缓动函数（easeInOutQuad）
+                                });
+                                return newSite;
+                            });
+                        }
+
+                        indexRef.current += 1
+                        if (indexRef.current === item-1) {
+                            timerControl("clear", null)
+                        }
+
+                    }, 100);
                 }
             }
         } else if (action === "stop") {
@@ -172,6 +201,7 @@ const Map = () => {
                 clearInterval(intervalRefs.current[0]);
             }
         } else if (action === "clear") {
+            console.log("clear");
             if (intervalRefs.current[0]) {
                 clearInterval(intervalRefs.current[0]);
             }
@@ -205,7 +235,6 @@ const Map = () => {
             top: "0", // 顶部为 0
             left: "0", // 左侧为 0
         }}
-        className={classNames("map-item-container")} // 通过 classNames 动态设置类名
         // onMouseEnter={() => timerControl("stop")}
         // onMouseLeave={() => timerControl("start")}
     >
