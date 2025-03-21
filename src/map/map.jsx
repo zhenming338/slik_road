@@ -31,28 +31,31 @@ const Map = () => {
     //地图容器和地图实例的虚拟dom元素
     const mapContainerRef = useRef(null);
     const mapInstanceRef = useRef(null);
+    const runningRef = useRef([]);
     const indexRef = useRef([]);
     const intervalRefs = useRef([])
+    const itemRef = useRef([]);
+    const infoRef = useRef([]);
     const [siteInfo, setSiteInfo] = useState([44, 44]);
-    const [running, setRunning] = useState(false);
     const [mapCurrentIndex, setMapCurrentIndex] = useState(-1);
+
 
     const coverMapInfo = {
         center: [45, 45],
-        zoom: 6, // 设置缩放级别
-        pitch: 45, // 设置倾斜角度
-        speed: 1.2, // 设置飞行速度
-        curve: 1.43, // 设置飞行曲线
-        essential: true
+        zoom: 6,
+        pitch: 45,
+        bearing: 0,
+        duration: 200,  // 持续时间（毫秒）
+        easing: (t) => t * (2 - t)  // 自定义缓动函数（easeInOutQuad）
     }
 
     const directoryMapInfo = {
         center: [108.8360596, 34.312109],
-        zoom: 4, // 设置缩放级别
-        pitch: 45, // 设置倾斜角度
-        speed: 1.2, // 设置飞行速度
-        curve: 1.43, // 设置飞行曲线
-        essential: true
+        zoom: 6,
+        pitch: 45,
+        bearing: 0,
+        duration: 200,  // 持续时间（毫秒）
+        easing: (t) => t * (2 - t)  // 自定义缓动函数（easeInOutQuad）
     }
     const [animationList, setAnimationList] = useState(
         [
@@ -103,11 +106,10 @@ const Map = () => {
         // 避免重复添加
         if (map.getSource(sourceId)) {
             console.log("sourceId", sourceId, "避免重复添加");
-            // map.removeSource(sourceId);
-            // map.removeLayer(layerId);
             return;
         }
 
+        console.log(show)
         // 创建 GeoJSON 数据（合并所有 items）
         const geojsonData = {
             type: "FeatureCollection",
@@ -199,9 +201,11 @@ const Map = () => {
                     removeLayers(0, animationList.length - 1, mapInstanceRef.current)
                 } else if (storeCurrentPageIndex === 0) {
                     //显示的是目录
+                    removeLayers(0, 1, mapInstanceRef.current)
                     flay(mapInstanceRef.current, directoryMapInfo)
                     addLayers(animationList.length - 1, 0, mapInstanceRef.current, true)
                 }
+
                     //状态2 ： 当需要显示的是正文状态
                 //此状态中，正在跟踪的柱状体部分需要使用定时器进行逐步显示，非跟踪部分需要直接显示
                 else {
@@ -220,38 +224,41 @@ const Map = () => {
                                 timerControl("start", item, {
                                     follow: animationList[0].follow === index,
                                     animationIndex: 0,
-                                    perspectiveIndex: index
+                                    perspectiveIndex: index,
+                                    showType: true
                                 })
                             })
                         } else {
                             //当前显示的柱状体包含多个部分
-                            addLayers(newIndex, newIndex - 1, mapInstanceRef.current, false)
+                            addLayers(newIndex, newIndex, mapInstanceRef.current, false)
                             animationList[newIndex].perspective.map((item, index) => {
                                 timerControl("start", item, {
                                     follow: animationList[newIndex].follow === index,
                                     animationIndex: newIndex,
-                                    perspectiveIndex: index
+                                    perspectiveIndex: index,
+                                    showType: true
                                 })
                             })
-                            //对前的柱状体部分进行直接显示
-                            addLayers(newIndex - 1, 0, mapInstanceRef.current, true)
-                            // showLayers(newIndex - 1, 0, mapInstanceRef.current, true)
+                            showLayers(newIndex - 1,
+                                oldIndex - 1 < 0 ? 0 : oldIndex - 1,
+                                mapInstanceRef.current, true)
                         }
                     } else {
                         let newIndex = storeCurrentPageIndex - 1;
                         let oldIndex = mapCurrentIndex - 1;
                         removeLayers(newIndex, oldIndex, mapInstanceRef.current)
-                        flay(mapInstanceRef.current, {
-                            center: animationList[newIndex].perspective[animationList[newIndex].follow][0].location,
-                            zoom: 6, // 设置缩放级别
-                            pitch: 45, // 设置倾斜角度
-                            speed: 1.2, // 设置飞行速度
-                            curve: 1.43, // 设置飞行曲线
-                            essential: true
+                        addLayers(newIndex, newIndex, mapInstanceRef.current, false)
+                        console.log("start to add layers")
+                        animationList[newIndex].perspective.map((item, index) => {
+                            timerControl("start", item, {
+                                follow: animationList[newIndex].follow === index,
+                                animationIndex: newIndex,
+                                perspectiveIndex: index,
+                                showType: true
+                            })
                         })
                     }
                 }
-
                 setMapCurrentIndex(() => {
                     return storeCurrentPageIndex;
                 })
@@ -261,7 +268,7 @@ const Map = () => {
 
 
     const flay = (map, siteInfo) => {
-        map.flyTo(siteInfo)
+        map.easeTo(siteInfo)
     }
     const addLayers = (articleIndex, mapIndex, map, show) => {
         for (let i = mapIndex; i <= articleIndex; i++) {
@@ -282,7 +289,7 @@ const Map = () => {
         }
     }
 
-    const showLayers = (articleIndex, mapIndex, map) => {
+    const showLayers = (articleIndex, mapIndex, map, type) => {
 
         if (!map) return;
 
@@ -295,7 +302,7 @@ const Map = () => {
                             animationList[i].perspective[j].forEach((item, index) => {
                                 map.setFeatureState(
                                     {source: sourceId, id: index},
-                                    {selected: true}
+                                    {selected: type}
                                 );
                             });
                         }
@@ -311,8 +318,13 @@ const Map = () => {
             if (!indexRef.current[info.perspectiveIndex]) {
                 indexRef.current[info.perspectiveIndex] = 0;
             }
-            if (true) {
-                setRunning(true);
+            if (!runningRef.current[info.perspectiveIndex]) {
+                runningRef.current[info.perspectiveIndex] = false;
+            }
+            itemRef.current[info.perspectiveIndex] = item;
+            infoRef.current[info.perspectiveIndex] = info;
+            if (!runningRef.current[info.perspectiveIndex]) {
+                runningRef.current[info.perspectiveIndex] = true
                 if (mapInstanceRef.current) {
                     intervalRefs.current[info.perspectiveIndex] = setInterval(() => {
                         const itemIndex = indexRef.current[info.perspectiveIndex];
@@ -337,48 +349,53 @@ const Map = () => {
                                     source: sourceId,
                                     id: indexRef.current[info.perspectiveIndex],
                                 },
-                                {selected: true}
+                                {selected: info.showType}
                             );
                         } else {
-                            indexRef.current[info.perspectiveIndex] = 0
+                            // indexRef.current[info.perspectiveIndex] = 0
                             timerControl("clear", null, {
                                 perspectiveIndex: info.perspectiveIndex,
                             })
                         }
                         indexRef.current[info.perspectiveIndex] += 1
-
-
                     }, 100);
                 }
             }
         } else if (action === "stop") {
-            if (running) {
-                setRunning(() => {
-                    return false
-                });
-                clearInterval(intervalRefs.current[info.perspectiveIndex]);
+            console.log("stop")
+            if (!info) {
+
+                intervalRefs.current.map((item) => {
+                    clearInterval(item)
+                })
+                runningRef.current.map((_, index) => {
+                    runningRef.current[index] = false
+                })
             }
+        } else if (action === "restart") {
+            console.log("restart")
+            infoRef.current.map((info) => {
+                timerControl("start", itemRef.current[info.perspectiveIndex], info)
+            })
         } else if (action === "clear") {
             setSiteInfo([44, 44]);
-            setRunning(() => {
-                return false
-            });
+
             if (!info) {
                 intervalRefs.current.map((item) => {
                     clearInterval(item)
                 })
                 indexRef.current = []
+                runningRef.current = []
             } else {
                 if (intervalRefs.current[info.perspectiveIndex]) {
                     clearInterval(intervalRefs.current[info.perspectiveIndex]);
                     indexRef.current[info.perspectiveIndex] = 0;
-
+                    runningRef.current[info.perspectiveIndex] = false
                 }
             }
 
         }
-    };
-
+    }
 
     return <div
         ref={mapContainerRef}
@@ -387,8 +404,8 @@ const Map = () => {
             top: "0",
             left: "0",
         }}
-        // onMouseEnter={() => timerControl("stop")}
-        // onMouseLeave={() => timerControl("start")}
+        onMouseEnter={() => timerControl("stop")}
+        onMouseLeave={() => timerControl("restart")}
     >
     </div>
 
