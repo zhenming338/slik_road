@@ -78,12 +78,28 @@ const Content = () => {
             }}
             data-index={-1}
         ><Cover/></div>
+        <div style={{
+            width: "100%",
+            height: "100px",
+            fontSize: "30px",
+            textAlign: "center",
+            background: "#dbc6c6",
+            lineHeight: "100px",
+        }}> {-1}</div>
         <div
             ref={(el) => {
                 directoryRef.current = el
             }}
             data-index={0}
         ><Directory/></div>
+        <div style={{
+            width: "100%",
+            height: "100px",
+            fontSize: "30px",
+            textAlign: "center",
+            background: "#dbc6c6",
+            lineHeight: "100px",
+        }}> {0}</div>
         {
             contentList.map((item, index) => {
                 return <div key={item.id}
@@ -100,7 +116,7 @@ const Content = () => {
                         textAlign: "center",
                         background: "#dbc6c6",
                         lineHeight: "100px",
-                    }}> {index}</div>
+                    }}> {index+1}</div>
                 </div>
             })
         }

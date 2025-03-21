@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import {useSelector} from "react-redux";
 import {useEffect, useRef, useState} from "react";
 import mapboxgl from "mapbox-gl";
@@ -27,18 +26,39 @@ import perspective_9_2 from "./data/perspective/9/7.json";
 import perspective_10_1 from "./data/perspective/10/6.json";
 
 const Map = () => {
+
+
     //地图容器和地图实例的虚拟dom元素
     const mapContainerRef = useRef(null);
     const mapInstanceRef = useRef(null);
-    const indexRef = useRef(0);
+    const indexRef = useRef([]);
     const intervalRefs = useRef([])
     const [siteInfo, setSiteInfo] = useState([44, 44]);
     const [running, setRunning] = useState(false);
+    const [mapCurrentIndex, setMapCurrentIndex] = useState(-1);
 
-    const [animationList, setAnimationList] = useState([
-        {
-            type: "layer", perspective: [perspective_1_1, perspective_1_2, perspective_1_3], follow: 0,
-        }, {
+    const coverMapInfo = {
+        center: [45, 45],
+        zoom: 6, // 设置缩放级别
+        pitch: 45, // 设置倾斜角度
+        speed: 1.2, // 设置飞行速度
+        curve: 1.43, // 设置飞行曲线
+        essential: true
+    }
+
+    const directoryMapInfo = {
+        center: [108.8360596, 34.312109],
+        zoom: 4, // 设置缩放级别
+        pitch: 45, // 设置倾斜角度
+        speed: 1.2, // 设置飞行速度
+        curve: 1.43, // 设置飞行曲线
+        essential: true
+    }
+    const [animationList, setAnimationList] = useState(
+        [
+            {
+                type: "layer", perspective: [perspective_1_1, perspective_1_2, perspective_1_3], follow: 0,
+            }, {
             type: "layer", perspective: [perspective_2_1], follow: 0,
         }, {
             type: "layer", perspective: [perspective_3_1, perspective_3_2, perspective_3_3], follow: 1,
@@ -57,10 +77,8 @@ const Map = () => {
         }, {
             type: "layer", perspective: [perspective_10_1], follow: 0,
         }
-    ]);
-
-    console.log(animationList)
-
+        ]
+    );
     //mapbox的访问密钥
     const MAPBOX_TOKEN = "pk.eyJ1IjoibXlvc290aXMteSIsImEiOiJjbG55c293cGUwbnJ6MnRxaHEyemN5djhpIn0.0vv9uucFqUgg4EGpe41oaw";
     const storeCurrentPageIndex = useSelector(state => state.article.currentPageIndex);
@@ -79,21 +97,23 @@ const Map = () => {
             }, filter: ['==', 'admin_level', 2], // 只显示国家级别边界
         },],
     });
-    const addPopulationLayer = (map, items, animationIndex, perspectiveIndex, isFollow) => {
+    const addPopulationLayer = (map, items, animationIndex, perspectiveIndex, show) => {
         const sourceId = `population-source-${animationIndex}-${perspectiveIndex}`;
         const layerId = `population-layer-${animationIndex}-${perspectiveIndex}`;
         // 避免重复添加
         if (map.getSource(sourceId)) {
             console.log("sourceId", sourceId, "避免重复添加");
+            // map.removeSource(sourceId);
+            // map.removeLayer(layerId);
             return;
         }
-
 
         // 创建 GeoJSON 数据（合并所有 items）
         const geojsonData = {
             type: "FeatureCollection",
             features: items.map((item, index) => ({
                 type: "Feature",
+                id: index,
                 properties: {
                     id: index, // 添加 ID，便于后续更新
                     height: item.population / 0.01,
@@ -120,20 +140,33 @@ const Map = () => {
             id: layerId,
             type: "fill-extrusion",
             source: sourceId,
-            paint: {
+            paint: show ? {
                 "fill-extrusion-height": ["get", "height"],
                 "fill-extrusion-color": [
-                    "interpolate",
-                    ["linear"],
-                    ["get", "height"],
-                    0, "rgba(225, 200, 174, 0)",  // 低值时完全透明
-                    1000, "rgba(225, 200, 174, 1)" // 高值时完全可见
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    "rgba(171,133,95,0.88)", // 选中状态颜色
+                    "rgba(171,133,95,0.88)", // 默认颜色
                 ],
-            },
+            } : {
+                "fill-extrusion-height": ["get", "height"],
+                "fill-extrusion-color": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+
+                    "rgba(171,133,95,0.88)", // 选中状态颜色
+                    "rgba(169,45,45,0)", // 默认颜色
+                ],
+            }
         });
+
+
     };
 
 
+    /**
+     * 根据样式初始化地图实例
+     * */
     useEffect(() => {
         mapboxgl.accessToken = MAPBOX_TOKEN;
         mapInstanceRef.current = new mapboxgl.Map({
@@ -145,95 +178,214 @@ const Map = () => {
         }
     }, [style]);
 
-    useEffect(() => {
-        if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
-            var mainRoadList = []
-            animationList.map((animationItem, animationIndex) => {
-                animationItem.perspective.map((perspectiveItem, perspectiveIndex) => {
-                    addPopulationLayer(mapInstanceRef.current, perspectiveItem, animationIndex, perspectiveIndex, false);
-                })
-                console.log(animationItem);
-                mainRoadList = [...mainRoadList, ...animationItem.perspective[animationItem.follow]]
-            })
-            console.log(mainRoadList)
-            timerControl("start", mainRoadList);
-        }
-    }, [storeCurrentPageIndex]);
 
-    const timerControl = (action, item) => {
-        if (action === "start") {
-            if (!running) {
-                setRunning(true);
-                if (mapInstanceRef.current) {
-                    intervalRefs.current[0] = setInterval(() => {
-                        console.log("startTimer");
-                        console.log(item.length)
-                        console.log(indexRef.current)
-                        // 使用函数式更新
-                        if (indexRef.current < item.length-1) {
-                            setSiteInfo(() => {
-                                console.log(item[indexRef.current].location)
-                                const newSite = item[indexRef.current].location;
-                                mapInstanceRef.current.easeTo({
-                                    center: newSite,
-                                    zoom: 6,
-                                    pitch: 45,
-                                    bearing: 0,
-                                    duration: 200,  // 持续时间（毫秒）
-                                    easing: (t) => t * (2 - t)  // 自定义缓动函数（easeInOutQuad）
-                                });
-                                return newSite;
+    /**
+     * 根据当前article组件显示的页面下标更新map组件显示的状态
+     * storeCurrentPageIndex : article组件正在显示的页面下标
+     * mapCurrentIndex ： 当前map组件正在显示的柱状体对应在animationList中的下标
+     * */
+    useEffect(() => {
+        console.log("storeCurrentPageIndex", storeCurrentPageIndex)
+        console.log("mapIndex", mapCurrentIndex)
+        if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
+
+            if (mapCurrentIndex !== storeCurrentPageIndex) {
+                timerControl("clear", null, null)
+                //状态1 : 当需要显示的是封面状态或目录状态
+                //此状态与计时器无关
+                if (storeCurrentPageIndex === -1) {
+                    //显示的是封面
+                    flay(mapInstanceRef.current, coverMapInfo)
+                    removeLayers(0, animationList.length - 1, mapInstanceRef.current)
+                } else if (storeCurrentPageIndex === 0) {
+                    //显示的是目录
+                    flay(mapInstanceRef.current, directoryMapInfo)
+                    addLayers(animationList.length - 1, 0, mapInstanceRef.current, true)
+                }
+                    //状态2 ： 当需要显示的是正文状态
+                //此状态中，正在跟踪的柱状体部分需要使用定时器进行逐步显示，非跟踪部分需要直接显示
+                else {
+                    if (mapCurrentIndex === 0) {
+                        //刚离开目录部分
+                        removeLayers(0, animationList.length - 1, mapInstanceRef.current)
+                    }
+
+                    if (storeCurrentPageIndex > mapCurrentIndex) {
+                        let newIndex = storeCurrentPageIndex - 1;
+                        let oldIndex = mapCurrentIndex - 1;
+                        if (oldIndex < 0) {
+                            //当前显示的是animationList中的第一部分
+                            addLayers(newIndex, 0, mapInstanceRef.current, false)
+                            animationList[0].perspective.map((item, index) => {
+                                timerControl("start", item, {
+                                    follow: animationList[0].follow === index,
+                                    animationIndex: 0,
+                                    perspectiveIndex: index
+                                })
+                            })
+                        } else {
+                            //当前显示的柱状体包含多个部分
+                            addLayers(newIndex, newIndex - 1, mapInstanceRef.current, false)
+                            animationList[newIndex].perspective.map((item, index) => {
+                                timerControl("start", item, {
+                                    follow: animationList[newIndex].follow === index,
+                                    animationIndex: newIndex,
+                                    perspectiveIndex: index
+                                })
+                            })
+                            //对前的柱状体部分进行直接显示
+                            addLayers(newIndex - 1, 0, mapInstanceRef.current, true)
+                            // showLayers(newIndex - 1, 0, mapInstanceRef.current, true)
+                        }
+                    } else {
+                        let newIndex = storeCurrentPageIndex - 1;
+                        let oldIndex = mapCurrentIndex - 1;
+                        removeLayers(newIndex, oldIndex, mapInstanceRef.current)
+                        flay(mapInstanceRef.current, {
+                            center: animationList[newIndex].perspective[animationList[newIndex].follow][0].location,
+                            zoom: 6, // 设置缩放级别
+                            pitch: 45, // 设置倾斜角度
+                            speed: 1.2, // 设置飞行速度
+                            curve: 1.43, // 设置飞行曲线
+                            essential: true
+                        })
+                    }
+                }
+
+                setMapCurrentIndex(() => {
+                    return storeCurrentPageIndex;
+                })
+            }
+        }
+    }, [mapCurrentIndex, storeCurrentPageIndex]);
+
+
+    const flay = (map, siteInfo) => {
+        map.flyTo(siteInfo)
+    }
+    const addLayers = (articleIndex, mapIndex, map, show) => {
+        for (let i = mapIndex; i <= articleIndex; i++) {
+            for (let j = 0; j < animationList[i].perspective.length; j++) {
+                addPopulationLayer(map, animationList[i].perspective[j], i, j, show);
+            }
+        }
+    }
+
+    const removeLayers = (articleIndex, mapIndex, map) => {
+        for (let i = articleIndex; i <= mapIndex; i++) {
+            for (let j = 0; j < animationList[i].perspective.length; j++) {
+                if (map.getSource(`population-source-${i}-${j}`)) {
+                    map.removeLayer(`population-layer-${i}-${j}`)
+                    map.removeSource(`population-source-${i}-${j}`)
+                }
+            }
+        }
+    }
+
+    const showLayers = (articleIndex, mapIndex, map) => {
+
+        if (!map) return;
+
+        map.on("sourcedata", (e) => {
+            if (e.isSourceLoaded) { // 确保数据已加载
+                for (let i = mapIndex; i <= articleIndex; i++) {
+                    for (let j = 0; j < animationList[i].perspective.length; j++) {
+                        const sourceId = `population-source-${i}-${j}`;
+                        if (map.getSource(sourceId)) {
+                            animationList[i].perspective[j].forEach((item, index) => {
+                                map.setFeatureState(
+                                    {source: sourceId, id: index},
+                                    {selected: true}
+                                );
                             });
                         }
+                    }
+                }
+            }
+        });
+    };
 
-                        indexRef.current += 1
-                        if (indexRef.current === item-1) {
-                            timerControl("clear", null)
+
+    const timerControl = (action, item, info) => {
+        if (action === "start") {
+            if (!indexRef.current[info.perspectiveIndex]) {
+                indexRef.current[info.perspectiveIndex] = 0;
+            }
+            if (true) {
+                setRunning(true);
+                if (mapInstanceRef.current) {
+                    intervalRefs.current[info.perspectiveIndex] = setInterval(() => {
+                        const itemIndex = indexRef.current[info.perspectiveIndex];
+                        if (indexRef.current[info.perspectiveIndex] < item.length) {
+                            const sourceId = `population-source-${info.animationIndex}-${info.perspectiveIndex}`;
+                            if (info.follow) {
+                                setSiteInfo(() => {
+                                    const newSite = item[itemIndex].location;
+                                    mapInstanceRef.current.easeTo({
+                                        center: newSite,
+                                        zoom: 6,
+                                        pitch: 45,
+                                        bearing: 0,
+                                        duration: 200,  // 持续时间（毫秒）
+                                        easing: (t) => t * (2 - t)  // 自定义缓动函数（easeInOutQuad）
+                                    });
+                                    return newSite;
+                                });
+                            }
+                            mapInstanceRef.current.setFeatureState(
+                                {
+                                    source: sourceId,
+                                    id: indexRef.current[info.perspectiveIndex],
+                                },
+                                {selected: true}
+                            );
+                        } else {
+                            indexRef.current[info.perspectiveIndex] = 0
+                            timerControl("clear", null, {
+                                perspectiveIndex: info.perspectiveIndex,
+                            })
                         }
+                        indexRef.current[info.perspectiveIndex] += 1
+
 
                     }, 100);
                 }
             }
         } else if (action === "stop") {
             if (running) {
-                setRunning(false);
-                console.log(siteInfo); // 直接使用 siteInfo
-                clearInterval(intervalRefs.current[0]);
+                setRunning(() => {
+                    return false
+                });
+                clearInterval(intervalRefs.current[info.perspectiveIndex]);
             }
         } else if (action === "clear") {
-            console.log("clear");
-            if (intervalRefs.current[0]) {
-                clearInterval(intervalRefs.current[0]);
-            }
             setSiteInfo([44, 44]);
-            setRunning(false);
+            setRunning(() => {
+                return false
+            });
+            if (!info) {
+                intervalRefs.current.map((item) => {
+                    clearInterval(item)
+                })
+                indexRef.current = []
+            } else {
+                if (intervalRefs.current[info.perspectiveIndex]) {
+                    clearInterval(intervalRefs.current[info.perspectiveIndex]);
+                    indexRef.current[info.perspectiveIndex] = 0;
+
+                }
+            }
+
         }
     };
 
 
-    useEffect(() => {
-        // startTimer();
-        // timerControl("start")
-        return () => {
-            if (intervalRefs.current[0]) {
-                // clearTimer()
-                timerControl("clear")
-            }
-        }
-    }, [])
-
-    useEffect(() => {
-        console.log(siteInfo)
-    }, [siteInfo])
-
-
     return <div
-        ref={mapContainerRef} // 设置地图容器的引用
-        style={{// 宽度 60% 的视口宽度
-            height: "100vh", // 高度为 100% 视口高度
-            // position: "fixed", // 固定定位
-            top: "0", // 顶部为 0
-            left: "0", // 左侧为 0
+        ref={mapContainerRef}
+        style={{
+            height: "100vh",
+            top: "0",
+            left: "0",
         }}
         // onMouseEnter={() => timerControl("stop")}
         // onMouseLeave={() => timerControl("start")}

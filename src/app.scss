@@ -37,13 +37,6 @@ body {
     left: 0;
     background-color: #000;
     z-index: 0;
-    //.mapboxgl-map{
-    //.mapboxgl-control-container{
-    //  position: fixed;
-    //  top: 10px;
-    //  left: 10px;
-    //}
-  //}
   }
 
   .article-container {
@@ -51,7 +44,7 @@ body {
     right: 0;
     background-color: #a73f3f;
     box-shadow: 0 0 30px gray;
-    z-index: 999;
+    z-index: 1;
 
   }
 
@@ -72,6 +65,7 @@ body {
       transition: all 0.3s ease-in-out;
       opacity: 1;
       border-radius: 50px;
+      z-index: 999;
     }
 
     .toggle-container:hover {
