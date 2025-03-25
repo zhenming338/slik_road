@@ -24,6 +24,9 @@ import perspective_8_2 from "./data/perspective/8/7.json";
 import perspective_9_1 from "./data/perspective/9/6.json";
 import perspective_9_2 from "./data/perspective/9/7.json";
 import perspective_10_1 from "./data/perspective/10/6.json";
+import {createRoot} from "react-dom/client";
+import "./map.scss"
+import classNames from "classnames";
 
 const Map = () => {
 
@@ -86,20 +89,31 @@ const Map = () => {
     const MAPBOX_TOKEN = "pk.eyJ1IjoibXlvc290aXMteSIsImEiOiJjbG55c293cGUwbnJ6MnRxaHEyemN5djhpIn0.0vv9uucFqUgg4EGpe41oaw";
     const storeCurrentPageIndex = useSelector(state => state.article.currentPageIndex);
     const [style, setStyle] = useState({
-        version: 8, sources: {
-            // 使用 Mapbox 的矢量切片服务
-            'mapbox-streets': {
-                type: 'vector', url: 'mapbox://mapbox.mapbox-streets-v8',
+        version: 8,
+        sources: {
+            "raster-tiles": {
+                type: "raster",
+                tiles: [
+                    "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
+                    // "https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=6&x={x}&y={y}&z={z}",
+                    // "https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
+                    // "https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",
+                ],
+                tileSize: 256,
             },
-        }, layers: [{
-            id: 'boundaries', // 地区边界线
-            type: 'line', source: 'mapbox-streets', 'source-layer': 'admin', // 使用 admin 图层
-            paint: {
-                'line-color': '#000000', // 边界线颜色
-                'line-width': 1, // 边界线宽度
-            }, filter: ['==', 'admin_level', 2], // 只显示国家级别边界
-        },],
-    });
+        },
+        layers: [
+            {
+                id: "simple-tiles",
+                type: "raster",
+                source: "raster-tiles",
+                minzoom: 0,
+                maxzoom: 22,
+            },
+        ],
+    }
+)
+    ;
     const addPopulationLayer = (map, items, animationIndex, perspectiveIndex, show) => {
         const sourceId = `population-source-${animationIndex}-${perspectiveIndex}`;
         const layerId = `population-layer-${animationIndex}-${perspectiveIndex}`;
@@ -175,11 +189,27 @@ const Map = () => {
             container: mapContainerRef.current, styles: style, center: [110, 40], zoom: 5,
         })
         mapInstanceRef.current.addControl(new mapboxgl.NavigationControl(), "top-left");
-        return () => {
-            mapInstanceRef.current?.remove();
-        }
+
+
     }, [style]);
 
+    useEffect(() => {
+        if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
+            console.log("add Mark")
+            console.log(animationList[0].perspective[0][0].location)
+            const contentExample = {
+
+                title: "example title",
+
+                content: "example text",
+
+            };
+            addMark(mapInstanceRef.current, contentExample, animationList[0].perspective[0][0].location);
+        }
+        return () => {
+            // mapInstanceRef.current?.remove();
+        }
+    }, [mapInstanceRef.current]);
 
     /**
      * 根据当前article组件显示的页面下标更新map组件显示的状态
@@ -312,6 +342,37 @@ const Map = () => {
         });
     };
 
+    const addMark = (mapInstance, content, site) => {
+
+        const popupContainer = document.createElement("div");
+
+        const container = createRoot(popupContainer);
+
+        container.render(
+            <div style={{width: "200px", height: "100px"}}>
+
+                <p style={{margin: 0, fontWeight: "bold"}}>{content.title}</p>
+
+                <hr/>
+
+                <p style={{margin: 0}}>{content.content}</p>
+
+            </div>
+        );
+
+        const marker = new mapboxgl.Marker({color: "black"}) // 创建标
+
+            .setLngLat(site) // 设置标记的经纬度 (例如天安门广场)
+
+            .setPopup(
+                new mapboxgl.Popup({offset: 30}) // 设置弹窗偏移
+
+                    .setDOMContent(popupContainer)
+            )
+
+            .addTo(mapInstance); // 将标记添加到地图
+
+    };
 
     const timerControl = (action, item, info) => {
         if (action === "start") {
@@ -399,11 +460,7 @@ const Map = () => {
 
     return <div
         ref={mapContainerRef}
-        style={{
-            height: "100vh",
-            top: "0",
-            left: "0",
-        }}
+        className={classNames("map-con-container")}
         onMouseEnter={() => timerControl("stop")}
         onMouseLeave={() => timerControl("restart")}
     >

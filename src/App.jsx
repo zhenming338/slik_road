@@ -31,12 +31,19 @@ const App = () => {
         <div className={classNames("article-container")}>
             <Article/>
         </div>
-        <div className={classNames("toggle-container")} onClick={() => {
-            setShowMap(!showMap)
-        }}/>
-        <div className={classNames("toggle-item")}>
-            toggle
+        <div
+            className={classNames("toggle-container")}
+            onClick={() => {
+                setShowMap(!showMap)
+            }}>
+
+            <div className={classNames("toggle-item")}>
+                toggle
+            </div>
+
         </div>
+
+
     </div>
 }
 export default App;
