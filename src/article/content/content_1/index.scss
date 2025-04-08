@@ -1,0 +1,57 @@
+// content-one.scss
+.content-one-container {
+    width: 40vw;
+    min-height: 100vh;
+    background-color: rgb(255, 255, 255);
+    
+    // 新增内容样式
+    .historical-content {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.8;
+  
+      h2 {
+        font-size: 2.2rem;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #c0392b;
+        padding-bottom: 0.5rem;
+      }
+  
+      p {
+        margin-bottom: 1.2rem;
+        font-size: 1.1rem;
+        color: #34495e;
+  
+        .emphasize {
+          color: #c0392b;
+          font-weight: 600;
+          padding: 0.2em 0.3em;
+          background-color: rgba(192, 57, 43, 0.05);
+        }
+      }
+  
+      .data-annotation {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px dashed #bdc3c7;
+      }
+  
+      // 响应式调整
+      @media (max-width: 768px) {
+        width: 90vw;
+        padding: 1rem;
+        
+        h2 {
+          font-size: 1.8rem;
+        }
+        
+        p {
+          font-size: 1rem;
+        }
+      }
+    }
+  }

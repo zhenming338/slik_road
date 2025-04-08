@@ -1,0 +1,95 @@
+// TurkmenistanMap.scss
+.abc-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #897964;
+  border-radius: 8px;
+  font-family: 'Noto Serif SC', serif;
+  h2, h3 {
+    color: #2c3e50;
+    border-bottom: 2px solid #c23a2d;
+    padding-bottom: 0.8rem;
+  }
+}
+
+.geo-narrative {
+  margin-bottom: 3rem;
+  
+  .desert-description {
+    line-height: 1.8;
+    color: #4a5568;
+    text-indent: 2em;
+    background: linear-gradient(to right, 
+      rgba(194,58,45,0.1) 0%,
+      transparent 30%);
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+}
+
+.route-legend {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-left: 4px solid #9c27b0;
+  background: rgba(156,39,176,0.05);
+
+  p {
+    line-height: 1.7;
+    color: #4a5568;
+  }
+}
+
+.energy-narrative {
+  background: url('data:image/svg+xml;utf8,<svg>...</svg>') no-repeat;
+  padding: 2rem;
+  margin: 2rem 0;
+  border: 1px solid rgba(198,40,40,0.3);
+  
+  p {
+    column-count: 2;
+    column-gap: 3rem;
+    color: #4a5568;
+  }
+}
+
+.cipher-decoding {
+  .arabic-cipher {
+    direction: rtl;
+    font-family: 'Noto Naskh Arabic', serif;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.03);
+    border-radius: 8px;
+    margin: 1.5rem 0;
+
+    .arabic-text {
+      font-size: 1.8rem;
+      color: #2e7d32;
+      text-align: center;
+    }
+  }
+  
+  .korean-annotation {
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 1rem;
+    border: 1px dashed #2196f3;
+    margin: 1.5rem 0;
+  }
+}
+
+.temporal-overlay {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 10px,
+    rgba(194,58,45,0.1) 10px 20px
+  );
+  
+  p {
+    line-height: 1.8;
+    color: #4a5568;
+    position: relative;
+    z-index: 1;
+  }
+}

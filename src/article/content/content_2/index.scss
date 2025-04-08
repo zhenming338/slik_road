@@ -1,0 +1,47 @@
+// 增强样式系统
+.wuweijieshao {
+    // 新增专业术语样式
+    .tech-heritage {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem -1.5rem;
+      border-left: 3px solid #3498db;
+  
+      .emphasize {
+        background: linear-gradient(to right, #3498db33, transparent);
+      }
+    }
+  
+    // 时间轴效果
+    p:not(.data-annotation)::before {
+      content: '▶';
+      color: #e67e22;
+      margin-right: 0.8rem;
+      font-size: 0.8em;
+      vertical-align: middle;
+    }
+  
+    // 数据高光
+    .emphasize {
+      position: relative;
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: currentColor;
+        opacity: 0.2;
+      }
+    }
+  
+    // 响应式优化
+    @media (max-width: 768px) {
+      .tech-heritage {
+        margin: 1.5rem 0;
+        padding: 1rem;
+      }
+    }
+  }

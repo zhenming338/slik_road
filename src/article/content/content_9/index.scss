@@ -1,0 +1,100 @@
+// SilkRoadMap.scss
+$purple-route: #9c27b0;
+$red-route: #d32f2f;
+$desert-bg: #f5e6d3;
+
+.bcd-container {
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  background: $desert-bg;
+  min-height: 100vh;
+
+  .geo-narrative {
+    max-width: 800px;
+    
+    .main-title {
+      color: darken($purple-route, 15%);
+      border-bottom: 3px solid $red-route;
+    }
+  }
+}
+
+.route-description {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-left: 4px solid;
+
+  &.purple-route {
+    border-color: $purple-route;
+    background: linear-gradient(to right, 
+      rgba($purple-route,0.1) 0%,
+      rgba(255,255,255,0.8) 100%);
+  }
+
+  &.red-route {
+    border-color: $red-route;
+    background: linear-gradient(to right, 
+      rgba($red-route,0.1) 0%,
+      rgba(255,255,255,0.8) 100%);
+  }
+}
+
+.highlight {
+  color: $red-route;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cipher-section {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: rgba(0,0,0,0.05);
+
+  .arabic-cipher {
+    font-family: 'Noto Naskh Arabic';
+    direction: rtl;
+  }
+
+  .error-cipher {
+    color: #c62828;
+    border-left: 3px solid #c62828;
+  }
+}
+
+.temporal-layer {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 10px,
+    rgba($purple-route,0.1) 10px 20px
+  );
+
+  .ar-text {
+    position: relative;
+    &::after {
+      content: '⇲';
+      color: $red-route;
+      margin-left: 0.5rem;
+    }
+  }
+}
+
+.visual-map {
+  position: sticky;
+  top: 2rem;
+  height: 90vh;
+  background: url('data:image/svg+xml;utf8,<svg>...</svg>');
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 1200px) {
+  .map-container {
+    grid-template-columns: 1fr;
+    
+    .visual-map {
+      height: 60vh;
+    }
+  }
+}

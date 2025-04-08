@@ -1,0 +1,89 @@
+// RouteStyles.scss
+$zhangye-color: #d63031; // 丹霞红
+$jiuquan-color: #0984e3; // 航天蓝
+$dunhuang-color: #e67e22; // 沙漠橙
+
+.route-container {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+
+  .city-card {
+    padding: 2.5rem;
+    margin: 3rem 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+
+    // 路线装饰线
+    &::after {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 50%;
+      width: 4px;
+      height: 120%;
+      background: linear-gradient(to bottom,
+          $zhangye-color 0%,
+          $jiuquan-color 50%,
+          $dunhuang-color 100%);
+      transform: translateY(-50%);
+    }
+
+    h2 {
+      font-family: "华文楷体", cursive;
+      margin-bottom: 1.5rem;
+    }
+
+    .route-path {
+      color: #636e72;
+      margin: 1.2rem 0;
+      font-size: 0.95em;
+    }
+
+    p {
+      line-height: 1.9;
+      text-indent: 2em;
+      margin: 1.5rem 0;
+    }
+
+    // 各城市特色样式
+    &.zhangye {
+      border-left: 4px solid $zhangye-color;
+
+      .emphasize {
+        color: darken($zhangye-color, 10%);
+      }
+    }
+
+    &.jiuquan {
+      border-left: 4px solid $jiuquan-color;
+
+      .emphasize {
+        color: darken($jiuquan-color, 15%);
+      }
+    }
+
+    &.dunhuang {
+      border-left: 4px solid $dunhuang-color;
+
+      .emphasize {
+        color: darken($dunhuang-color, 10%);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    .city-card {
+      padding: 1.5rem;
+
+      &::after {
+        display: none;
+      }
+    }
+  }
+}

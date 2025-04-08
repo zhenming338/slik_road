@@ -1,14 +1,14 @@
 import classNames from "classnames";
-import {Content_1} from "./content_1/content_1.jsx";
-import {Content_2} from "./content_2/content_2.jsx";
-import {Content_3} from "./content_3/content_3.jsx";
-import {Content_4} from "./content_4/content_4.jsx";
-import {Content_5} from "./content_5/content_5.jsx";
-import {Content_6} from "./content_6/content_6.jsx";
-import {Content_7} from "./content_7/content_7.jsx";
-import {Content_8} from "./content_8/content_8.jsx";
-import {Content_9} from "./content_9/content_9.jsx";
-import {Content_10} from "./content_10/content_10.jsx";
+import Content_1 from "./content_1";
+import Content_2 from "./content_2";
+import Content_3 from "./content_3";
+import Content_4 from "./content_4";
+import Content_5 from "./content_5";
+import Content_6 from "./content_6";
+import Content_7 from "./content_7";
+import Content_8 from "./content_8";
+import Content_9 from "./content_9";
+import Content_10 from "./content_10";
 import "./content.scss"
 import {Cover} from "./cover/cover.jsx";
 import {Directory} from "./directory/direcotry.jsx";
@@ -17,13 +17,17 @@ import {useDispatch} from "react-redux";
 import {setCurrentPageIndex} from "../../store/article/article.jsx";
 
 const Content = () => {
+
     const dispatch = useDispatch();
     const coverRef = useRef(null);
     const directoryRef = useRef(null);
     const contentRefs = useRef([]);
     const contentComponents = [
         <Content_1/>,
+        <div style={{height: "100vh", background: "pink"}}></div>,
         <Content_2/>,
+        <div style={{height: "100vh", background: "pink"}}></div>,
+
         <Content_3/>,
         <Content_4/>,
         <Content_5/>,
@@ -32,10 +36,13 @@ const Content = () => {
         <Content_8/>,
         <Content_9/>,
         <Content_10/>,
+        <div style={{height: "100vh", background: "pink"}}></div>,
+        <div style={{height: "100vh", background: "pink"}}></div>,
+        <div style={{height: "100vh", background: "pink"}}></div>,
     ];
     const [contentList, setContentList] = useState(contentComponents.map((item, index) => {
         return {
-            id: index + 1,
+            id: index,
             content: item,
             visible: false,
         }
@@ -76,7 +83,7 @@ const Content = () => {
             ref={(el) => {
                 coverRef.current = el
             }}
-            data-index={-1}
+            data-index={-2}
         ><Cover/></div>
         <div style={{
             width: "100%",
@@ -85,12 +92,12 @@ const Content = () => {
             textAlign: "center",
             background: "#dbc6c6",
             lineHeight: "100px",
-        }}> {-1}</div>
+        }}> {-2}</div>
         <div
             ref={(el) => {
                 directoryRef.current = el
             }}
-            data-index={0}
+            data-index={-1}
         ><Directory/></div>
         <div style={{
             width: "100%",
@@ -99,7 +106,7 @@ const Content = () => {
             textAlign: "center",
             background: "#dbc6c6",
             lineHeight: "100px",
-        }}> {0}</div>
+        }}> {-1}</div>
         {
             contentList.map((item, index) => {
                 return <div key={item.id}
@@ -116,7 +123,7 @@ const Content = () => {
                         textAlign: "center",
                         background: "#dbc6c6",
                         lineHeight: "100px",
-                    }}> {index+1}</div>
+                    }}> {index}</div>
                 </div>
             })
         }

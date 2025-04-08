@@ -1,0 +1,60 @@
+// XinjiangDescription.scss
+.description-container {
+    max-width: 880px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #f8f6f2;
+    border: 1px solid #e0d7c6;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  }
+  
+  .dense-paragraph {
+    line-height: 1.9;
+    font-size: 1.05rem;
+    color: #3a3a38;
+    text-align: justify;
+    hyphens: auto;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(
+      to right,
+      rgba(255,255,255,0.9) 0%,
+      rgba(248,240,227,0.7) 100%
+    );
+    border-radius: 4px;
+    position: relative;
+  
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #c23a2d;
+      border-radius: 4px 0 0 4px;
+    }
+  }
+  
+  .modern-section .dense-paragraph::before {
+    background: #5a8c79;
+  }
+  
+  .annotation-section .dense-paragraph::before {
+    background: #f4a261;
+  }
+  
+  .historical-section .dense-paragraph::before {
+    background: #2c3e50;
+  }
+  
+  @media (max-width: 768px) {
+    .description-container {
+      padding: 1rem;
+    }
+    
+    .dense-paragraph {
+      font-size: 1rem;
+      padding: 1rem;
+    }
+  }

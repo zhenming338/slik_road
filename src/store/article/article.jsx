@@ -3,8 +3,8 @@ import {createSlice} from "@reduxjs/toolkit";
 const article = createSlice({
     name: "article",
     initialState: {
-        currentPageIndex: -1,
-        selectPageIndex: -1
+        currentPageIndex: -2,
+        selectPageIndex: -2
     },
     reducers: {
         setCurrentPageIndex(state, action) {
